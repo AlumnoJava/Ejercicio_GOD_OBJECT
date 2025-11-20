@@ -66,19 +66,14 @@ public class Goverment {
 	   (produccionSolicitada > calcularProduccionPotencial()) 
 		? new IncrementarNacimientosStrategy()
 		: (produccionSolicitada < calcularProduccionTotal())
-		  ? new ReducirNacimientosStrategy()
-				            
-// Caso normal [5]
+		  ? new ReducirNacimientosStrategy()	            
 		 : new NacimientosBaseStrategy();
-
- // Aplicar la estrategia
 		 int nuevosSeres = estrategiaSeleccionada.calcularNacimientos(nacimientosBase);
 		 this.addNuevosSeres(nuevosSeres); 
 
 	}
 
-	private void addNuevosSeres(int i) {
-		// Creamos 'i' nuevos seres y los añadimos a la lista de menores ('youngs') 
+	private void addNuevosSeres(int i) { 
 	    for (int j = 0; j < i; j++) {
 	        Being e = new Being(); 
 	        e.addAdultPropertyChangeListener(adultChangeListener); 
@@ -94,7 +89,6 @@ public class Goverment {
 	}
 
 	private void gestionEmpleados(long diferencia) {
-		 // Calculamos cuántos seres son necesarios u obsoletos, basándonos en la producción individual.
 	    int personasNecesariasOSobrantes = (int) (Math.abs(diferencia) / produccionPorTrabajador);
 
 	    if (diferencia > 0) { // Demanda > Producción: Necesitamos emplear
@@ -198,7 +192,7 @@ public class Goverment {
 		 // Presupuesto inicial: 100% de la Necesidad Vital (NV) 
 	    ancianos.forEach(ancient -> {
 	        int pago = ancient.getVitalNecesity(); 
-	        ancient.live(pago); // Paga la NV. [18]
+	        ancient.live(pago); // Paga la NV. 
 	        capital -= pago; // Restar del capital global. 
 	    });
 
@@ -207,7 +201,7 @@ public class Goverment {
 	private void pagoAMenores() {
 	    youngs.forEach(young -> {
 	        int pago = young.getVitalNecesity(); 
-	        young.live(pago); // Paga la NV. [18]
+	        young.live(pago); // Paga la NV. 
 	        capital -= pago; // Restar del capital global. 
 	    });
 
