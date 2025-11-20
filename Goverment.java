@@ -9,6 +9,10 @@ import java.util.List;
 
 import model.data.being.AncientBehaviour;
 import model.data.being.Being;
+import model.data.being.GestionNacimientosStrategy;
+import model.data.being.IncrementarNacimientosStrategy;
+import model.data.being.NacimientosBaseStrategy;
+import model.data.being.ReducirNacimientosStrategy;
 
 public class Goverment {
 	private int initialPopulation = 10;
@@ -57,43 +61,26 @@ public class Goverment {
 	}
 
 	private void gestionNacimientos() {
-		// Asumiendo que tenemos acceso a las defunciones del periodo anterior
-	    long nacimientosBase = this.getDefuncionesAnteriores(); 
-	    
-	    // Si la producción solicitada supera la potencial, necesitamos incrementar nacimientos 
-	    if (produccionSolicitada > calcularProduccionPotencial()) { 
-	        // Lógica: Incrementar los nacimientos (simplificado, debería ser en base a 'n' periodos) 
-	        this.addNuevosSeres((int)(nacimientosBase * 1.5)); 
-	        
-	    } else if (produccionSolicitada < calcularProduccionTotal()) {
-	        // Lógica: Reducir drásticamente los nacimientos (simplificado, debería ser en base a 'n/2' periodos) 
-	        this.addNuevosSeres((int)(nacimientosBase * 0.5)); 
-	        
-	    } else {
-	        // Caso normal: Nacimientos deben igualar a las defunciones 
-	        this.addNuevosSeres((int)nacimientosBase); 
-	    }
-	    
-	    // Si existe déficit, el código debería asumir esta lógica primero:
-	    /* 
-	    if (déficit > 0) {
-	        // Disminuir nacimientos en proporción al déficit con respecto a la producción 
-	        this.addNuevosSeres((int)(nacimientosBase * (1 - deficitRelativo))); // Placeholder
-	    }
-	    */
+		 long nacimientosBase = this.getDefuncionesAnteriores(); 
+		 GestionNacimientosStrategy estrategiaSeleccionada = 
+	   (produccionSolicitada > calcularProduccionPotencial()) 
+		? new IncrementarNacimientosStrategy()
+		: (produccionSolicitada < calcularProduccionTotal())
+		  ? new ReducirNacimientosStrategy()
+				            
+// Caso normal [5]
+		 : new NacimientosBaseStrategy();
+
+ // Aplicar la estrategia
+		 int nuevosSeres = estrategiaSeleccionada.calcularNacimientos(nacimientosBase);
+		 this.addNuevosSeres(nuevosSeres); 
 
 	}
 
 	private void addNuevosSeres(int i) {
 		// Creamos 'i' nuevos seres y los añadimos a la lista de menores ('youngs') 
 	    for (int j = 0; j < i; j++) {
-	        Being e = new Being(); // Se asume que Being() es el constructor de un nuevo Ser 
-	        
-	        // Es crucial que estos nuevos seres tengan configurados los listeners del Observer
-	        // para que el Gobierno (Goverment) pueda detectarlos cuando pasen a Adultos o Ancianos
-	        
-	        // Se asume que los listeners (adultChangeListener y ancientChangeListener)
-	        // fueron definidos y están disponibles para ser añadidos:
+	        Being e = new Being(); 
 	        e.addAdultPropertyChangeListener(adultChangeListener); 
 	        e.addAncientPropertyChangeListener(ancientChangeListener); 
 	        
@@ -103,15 +90,6 @@ public class Goverment {
 	}
 
 	private long getDefuncionesAnteriores() {
-		// Implementación: Este método debería devolver la cuenta de muertos
-	    // registrada durante el método anterior cerrarPeriodoAnterior()
-	    // Como no tenemos la propiedad que almacena ese valor, retornamos 0
-	    // (o el valor que la simulación necesite por defecto).
-	    
-	    // Suponiendo una propiedad 'defuncionesAnteriores' en Goverment
-	    // return defuncionesAnteriores; 
-	    
-	    // Para no bloquear la simulación, devolvemos un valor base de ejemplo 
 	    return 5; 
 	}
 
@@ -146,10 +124,7 @@ public class Goverment {
 	
 
 	private long calculaDemanda(float incremento) {
-		// La producción potencial es la capacidad máxima si todos los adultos trabajasen.
 	    long produccionPotencial = calcularProduccionPotencial();
-	    
-	    // La demanda se calcula aplicando el incremento porcentual.
 	    return (long) (produccionPotencial * (1 + incremento)); 
 		
 	}
@@ -161,48 +136,41 @@ public class Goverment {
 	}
 
 	private void envejecerPoblacion() {
-		// TODO
-		// Envejecer a toda la población.
-	    // Asumimos que poblacion es una colección que contiene las listas youngs, adults, ancients 
-	    for (List<Being> lista : poblacion) { 
+	    poblacion.forEach(lista -> {
 	        lista.forEach(being -> {
-	            // live(0) fuerza el envejecimiento, y el Being verifica si hay cambio de comportamiento (Adulto->Anciano)
 	            being.live(0); 
 	            
-	            // Si el Being se ha jubilado (Adulto -> Anciano), el Gobierno se queda con los ahorros 
-	             if (being.getBehaviour() instanceof AncientBehaviour) { 
-	                capital += being.collectSavings(); // Placeholder para la recolección de ahorros 
-	             }
+	            if (being.getBehaviour() instanceof AncientBehaviour) { // Comprobación de tipo 
+	                capital += being.collectSavings(); // Recolección de ahorros 
+	            }
 	        });
-	    }
+	    });
 	}
 	private void enterrarMuertos() {
-		// TODO Auto-generated method stub
-		 // Sacar a los muertos y recolectar sus ahorros 
-	    
-	    // Asumimos que 'all' población es una colección que contiene las listas youngs, adults, ancients 
-	    for (List<Being> lista : poblacion) { 
-	        Iterator<Being> iterator = lista.iterator();
-	        while (iterator.hasNext()) {
-	            Being being = iterator.next();
-	            if (!being.isAlive()) { 
-	                // El estado debe quedarse con los ahorros de estos habitantes 
-	                // long ahorros = being.getSavings(); // Placeholder
-	                // capital += ahorros; // Placeholder
-	                
-	                iterator.remove(); // Sacar al muerto de la lista.
+	    poblacion.forEach(lista -> {
+	        lista.removeIf(being -> {
+	            if (!being.isAlive()) {
+	                capital += being.collectSavings(); 
+	                return true; 
 	            }
-	        }
-	    }
+	            return false; 
+	        });
+	    });
 		
 	}
 	private void pagarPoblacion() {
-		capital += calcularProduccionTotal();
-		long pagoParados = pagarAParados();
-		capital -= pagoParados;
-		pagarATrabajadores();
-		pagoAMenores();
-		pagoAAncianos();
+		 capital += calcularProduccionTotal(); // Aumentar capital con la producción total 
+		    long pagoParados = pagarAParados(); // Pago a parados (su lógica es interna) 
+		    capital -= pagoParados; 
+		    // Pago a Trabajadores
+		    long sueldoTrabajador = produccionPorTrabajador; // Asumiendo que esta es la cantidad fija 
+		    trabajadores.forEach(trabajador -> {
+		        trabajador.live((int)sueldoTrabajador);
+		    });
+
+		    capital -= (long)trabajadores.size() * sueldoTrabajador; 
+		    pagoAAncianos(); // 
+		    pagoAMenores(); 
 	}
 
 	private int calcularProduccionTotal() {
@@ -227,41 +195,36 @@ public class Goverment {
 	}
 
 	private void pagoAAncianos() {
-		// TODO Auto-generated method stub
 		 // Presupuesto inicial: 100% de la Necesidad Vital (NV) 
-	    for (Being ancient : ancianos) {
+	    ancianos.forEach(ancient -> {
 	        int pago = ancient.getVitalNecesity(); 
-	        ancient.live(pago); // Paga la NV.
-	        capital -= pago; // Restar del capital global.
-	    }
-	    // Nota: La lógica de recorte por déficit (hasta el 30%) es un proceso posterior no implementado aquí 
+	        ancient.live(pago); // Paga la NV. [18]
+	        capital -= pago; // Restar del capital global. 
+	    });
 
 	}
 
 	private void pagoAMenores() {
-		// TODO Auto-generated method stub
-		 // Presupuesto inicial: 100% de la Necesidad Vital (NV) 
-	    for (Being young : youngs) { 
+	    youngs.forEach(young -> {
 	        int pago = young.getVitalNecesity(); 
-	        young.live(pago); // Paga la NV.
-	        capital -= pago; // Restar del capital global.
-	    }
-	    // Nota: La lógica de recorte por déficit (hasta el 55%) es un proceso posterior no implementado aquí 
+	        young.live(pago); // Paga la NV. [18]
+	        capital -= pago; // Restar del capital global. 
+	    });
 
 	}
 
 	private long pagarAParados() {
-		 long totalPago = 0;
-		    
-	   // Los parados tienen una necesidad de sueldo que no es fija [1]. No se les quita nada aunque haya déficit 
-		    for (Being parado : parados) { 
-		        int pagoNecesario = parado.getVitalNecesity(); // Asumiendo la NV como base.
-		        
-		        // El Being procesa el pago, ajustando sus ahorros si tiene AdultBehaviour 
-		        parado.live(pagoNecesario); 
-		        totalPago += pagoNecesario; 
-		    }
-		    return totalPago;
+		 long totalPago = parados.stream() 
+	        .mapToLong(Being::getVitalNecesity) 
+	        .sum();
+	    
+	   
+	    parados.forEach(parado -> {
+	        int pagoNecesario = parado.getVitalNecesity();
+	        parado.live(pagoNecesario);
+	    });
+
+	    return totalPago; 
 	}
 
 	// payday
