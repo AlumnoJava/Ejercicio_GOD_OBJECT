@@ -132,41 +132,22 @@ public class Being {
 	}
 
 	public void setActive(boolean b) {
-		// TODO Auto-generated method stub
-		 // 1. Obtener el comportamiento revisable (CheckableBehaviour)
 	    Optional<CheckableBehaviour> checkable = behaviour.getCheckable();
-
-	    // 2. Comprobar si existe y si es el comportamiento AdultBehaviour
 	    if (checkable.isPresent() && behaviour instanceof AdultBehaviour) {
-	        // 3. Delegar la llamada al AdultBehaviour para establecer el estado activo/parado
 	        ((AdultBehaviour) behaviour).setActive(b);
-
-	        // Nota: La clase Goverment llama a setActive(true) cuando contrata 
-	        // y a setActive(false) cuando despide 
 	    }
 		
 	}
 
 	public long collectSavings() {
-		// TODO Auto-generated method stub
-		 // 1. Obtener el comportamiento revisable (CheckableBehaviour)
 	    Optional<CheckableBehaviour> checkable = behaviour.getCheckable(); 
-
-	    // 2. Comprobar si existe y si es el AdultBehaviour (el único que tiene ahorros)
 	    if (checkable.isPresent() && behaviour instanceof AdultBehaviour) {
 	        AdultBehaviour adultBehaviour = (AdultBehaviour) behaviour;
-
-	        // 3. Recoger los ahorros
 	        long ahorrosRecogidos = adultBehaviour.getSavings(); 
-
-	        // 4. Poner los ahorros a cero en el comportamiento del adulto, ya que han sido recolectados
 	        adultBehaviour.setSavings(0); 
-
-	        // 5. Retornar la cantidad recolectada
 	        return ahorrosRecogidos;
 	    }
-	    // Si no es un AdultBehaviour (ej. es YoungBehaviour o AncientBehaviour),
-	    // no tiene ahorros para recolectar.
 	    return 0;
 	}
 }
+
